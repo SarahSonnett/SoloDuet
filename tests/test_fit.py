@@ -93,3 +93,33 @@ def test_summary_renders():
     res = sd.fit_lightcurve(lc, refine=False, **FAST_KW)
     text = res.summary()
     assert "verdict" in text and "synthetic" in text
+
+
+def test_verdict_error_scaling_16152_case():
+    # Both models fit poorly (chi2_nu ~ 7) and differ by a whisker: without
+    # error scaling, n = 434 would inflate that into "very strong" evidence;
+    # with the Lacerda & Jewitt (2007) rescaling the verdict must be
+    # indeterminate (the real (16152) 2019 situation).
+    import soloduet.fit as sdfit
+
+    rng = np.random.default_rng(1)
+    n = 434
+    ph = np.sort(rng.uniform(0, 1, n))
+    lc = sd.FoldedLightcurve(phase=ph, dmag=0.2 * np.sin(4 * np.pi * ph),
+                             err=np.full(n, 0.02), period_hr=22.93,
+                             alpha_deg=1.0)
+    curve = (np.arange(64) / 64.0, np.zeros(64))
+    single = sdfit.ModelFit(name="jacobi", scattering="lunar",
+                            params={"phi0": 0.0, "zeropoint": 0.0},
+                            chi2=7.36 * (n - 4), n=n, k=4, curve=curve)
+    binary = sdfit.ModelFit(name="binary", scattering="lunar",
+                            params={"phi0": 0.0, "zeropoint": 0.0,
+                                    "q": 0.6, "c1": 0.7, "separation": 1.0},
+                            chi2=7.25 * (n - 5), n=n, k=5, curve=curve)
+    v = sdfit._verdict(lc, {"jacobi": single, "binary": binary})
+    assert v.chi2_scale > 5.0
+    assert abs(v.delta_bic) < 6.0          # no longer "very strong"
+    assert v.preferred == "indeterminate"
+    # sanity: with trusted errors the same chi2 gap would be decisive
+    raw = single.bic - binary.bic
+    assert raw > 30.0

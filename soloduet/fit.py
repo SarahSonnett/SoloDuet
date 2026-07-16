@@ -49,6 +49,11 @@ class ModelFit:
     k: int
     curve: Tuple[np.ndarray, np.ndarray]      # dense (phase, dmag), unshifted
     density_kgm3: Optional[float] = None
+    #: True when the aspect angle was fit rather than fixed from a known
+    #: pole: the data cannot exclude equator-on viewing, and any lower
+    #: aspect implies a more elongated figure and hence a *higher* density
+    #: along the equilibrium sequences — the quoted value is a lower limit.
+    density_is_minimum: bool = True
     within_1sig: Dict[str, Tuple[float, float]] = field(default_factory=dict)
     grid: List[GridRecord] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
@@ -72,14 +77,26 @@ class ModelFit:
 
 @dataclass
 class Verdict:
-    """The solo-vs-duet decision with its statistical basis."""
+    """The solo-vs-duet decision with its statistical basis.
+
+    ``delta_bic``/``delta_aic`` are **error-scaled**: when the better of the
+    two competing models has reduced chi^2 above 1, both chi^2 values are
+    divided by it before the information criteria are computed — i.e. the
+    photometric uncertainties are assumed underestimated so that the best
+    model fits perfectly (the convention of Lacerda & Jewitt 2007).  Without
+    this, a large dataset that *neither* model describes well would turn a
+    meaningless per-point difference into spuriously "decisive" evidence.
+    ``chi2_scale`` records the factor applied (1 = errors taken at face
+    value).
+    """
 
     preferred: str                 # "single" | "binary" | "indeterminate"
     strength: str                  # Kass & Raftery ladder
-    delta_bic: float               # BIC(single) - BIC(binary); >0 favors binary
+    delta_bic: float               # scaled BIC(single) - BIC(binary); >0 favors binary
     delta_aic: float
     f_test_p: float
     morphology: compare.MorphologyReport
+    chi2_scale: float = 1.0
     caveats: List[str] = field(default_factory=list)
 
 
@@ -115,8 +132,12 @@ class SoloDuetResult:
             lines.append(f"  chi2/dof    : {fit.chi2:.1f}/{fit.dof} "
                          f"= {fit.redchi2:.2f}   BIC = {fit.bic:.1f}")
             if fit.density_kgm3 is not None:
-                lines.append(f"  bulk density: {fit.density_kgm3:.0f} kg/m3 "
-                             f"({fit.density_kgm3 / 1000.0:.2f} g/cm3)")
+                qual = (">= " if fit.density_is_minimum else "")
+                note = (" [minimum: aspect unconstrained]"
+                        if fit.density_is_minimum else "")
+                lines.append(f"  bulk density: {qual}{fit.density_kgm3:.0f} "
+                             f"kg/m3 ({qual}{fit.density_kgm3 / 1000.0:.2f} "
+                             f"g/cm3){note}")
             for note in fit.notes:
                 lines.append(f"  note        : {note}")
             lines.append("")
@@ -126,6 +147,10 @@ class SoloDuetResult:
                   f"({v.strength}, dBIC = {v.delta_bic:+.1f})",
                   f"  dAIC = {v.delta_aic:+.1f}   F-test p = {v.f_test_p:.3f} "
                   f"(heuristic)"]
+        if v.chi2_scale > 1.0:
+            lines.append(f"  (errors rescaled by chi2_nu = {v.chi2_scale:.2f}"
+                         " of the better model before computing dBIC/dAIC,"
+                         " per Lacerda & Jewitt 2007)")
         lines += ["  morphology  : " + s for s in v.morphology.summary_lines()]
         for cav in v.caveats:
             lines.append(f"  caveat      : {cav}")
@@ -294,6 +319,12 @@ def _refine(name, lc, law, params, render_kw):
         f = fams[float(q_grid[np.argmin(np.abs(q_grid - params["q"]))])]
         bounds = [(float(f["c1"][0]), float(f["c1"][-1])), (5.0, 90.0)]
 
+    if render_kw.get("fixed_aspect"):
+        # aspect known (single-value grid): hold it, don't fit it
+        idx = names.index("aspect_deg")
+        names.pop(idx)
+        bounds.pop(idx)
+
     def objective(x):
         if any(not (lo <= v <= hi) for v, (lo, hi) in zip(x, bounds)):
             return 1e12
@@ -353,7 +384,9 @@ def _finalize(name, lc, law, k, chi2, params, grid, render_kw) -> ModelFit:
 
     fit = ModelFit(name=name, scattering=law, params=params,
                    chi2=float(chi2), n=len(lc), k=k, curve=curve,
-                   density_kgm3=density, grid=grid, notes=notes)
+                   density_kgm3=density,
+                   density_is_minimum=not render_kw.get("fixed_aspect", False),
+                   grid=grid, notes=notes)
     fit.within_1sig = _within_ranges(grid, fit.chi2)
     return fit
 
@@ -399,7 +432,8 @@ def fit_lightcurve(
                      grid_n_phases=int(grid_n_phases),
                      grid_n_pixels=int(grid_n_pixels),
                      ba_step=float(ba_step), q_step=float(q_step),
-                     n_c1=int(n_c1))
+                     n_c1=int(n_c1),
+                     fixed_aspect=len(tuple(aspect_grid)) == 1)
 
     fits: Dict[str, ModelFit] = {}
     for name in modes:
@@ -425,8 +459,15 @@ def _verdict(lc: FoldedLightcurve, fits: Dict[str, ModelFit]) -> Verdict:
                                 "for a verdict"])
 
     single = min(singles, key=lambda f: f.bic)
-    delta_bic = single.bic - binary.bic     # > 0 favors binary
-    delta_aic = single.aic - binary.aic
+    # error scaling (Lacerda & Jewitt 2007): if even the better model has
+    # reduced chi^2 > 1, assume the uncertainties are underestimated by that
+    # factor — otherwise a large, poorly-modelled dataset converts a
+    # meaningless per-point difference into spuriously decisive evidence
+    scale = max(1.0, min(single.redchi2, binary.redchi2))
+    delta_bic = ((single.chi2 - binary.chi2) / scale
+                 + (single.k - binary.k) * np.log(len(lc)))  # > 0 favors binary
+    delta_aic = ((single.chi2 - binary.chi2) / scale
+                 + 2.0 * (single.k - binary.k))
     p = compare.f_test_p(single.chi2, single.dof, binary.chi2, binary.dof)
     strength = compare.bic_strength(delta_bic)
 
@@ -467,7 +508,8 @@ def _verdict(lc: FoldedLightcurve, fits: Dict[str, ModelFit]) -> Verdict:
 
     return Verdict(preferred=preferred, strength=strength,
                    delta_bic=float(delta_bic), delta_aic=float(delta_aic),
-                   f_test_p=float(p), morphology=morph, caveats=caveats)
+                   f_test_p=float(p), morphology=morph,
+                   chi2_scale=float(scale), caveats=caveats)
 
 
 __all__ = [

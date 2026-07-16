@@ -119,6 +119,24 @@ The strength labels follow the Kass & Raftery (1995) evidence ladder [9]:
 ΔBIC ≈ 2 ln(Bayes factor), ΔBIC = 10 already corresponds to odds of
 ~150 : 1 in favor of the winning model.
 
+**Error scaling.** ΔBIC is only meaningful if the photometric uncertainties
+are realistic. When even the better of the two models has χ²ᵥ > 1, both χ²
+values are divided by that χ²ᵥ before the criteria are computed — i.e. the
+errors are assumed underestimated so that the best model fits perfectly,
+the convention of Lacerda & Jewitt (2007). Without this, a large dataset
+that *neither* model describes well (χ²ᵥ ≫ 1 for both) would convert a
+tiny, meaningless per-point difference into spuriously "decisive" evidence;
+with it, such cases correctly land near ΔBIC ≈ 0 (indeterminate). The
+applied factor is reported as ``chi2_scale`` in the summary and JSON.
+
+**Densities are minima when the aspect is unconstrained.** A light curve
+cannot exclude equator-on viewing; any lower aspect angle implies a more
+elongated figure, which sits at lower ω²/(πGρ) on the equilibrium
+sequences and therefore at *higher* density for the same period. Fitted
+densities are quoted as ``>=`` lower limits unless you fix the aspect from
+a known spin pole (``--aspect``), in which case the aspect is held fixed
+(not refined) and the density is a genuine estimate.
+
 ## What it decides — and what it can't
 
 | Situation | SoloDuet's behaviour |
@@ -246,19 +264,20 @@ pipeline:
 
 | object | ground truth | SoloDuet verdict | recovered vs. truth |
 |---|---|---|---|
-| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC = +98) | near-contact separation d/(a₁+a₂) = 0.98; ρ = 3.75 g/cm³ (11% above the satellite-orbit value) |
-| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC = −359) | free-ellipsoid b/a = 0.39 vs. 0.33 in situ; binary model rejected at χ²ᵥ 7.6 vs. 4.7 |
+| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC = +36, error-scaled) | contact separation d/(a₁+a₂) = 1.00; ρ = 3.78 g/cm³ (12% above the satellite-orbit value) |
+| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC = −92, error-scaled) | free-ellipsoid b/a = 0.39 vs. 0.33 in situ; binary model rejected at χ²ᵥ 8.3 vs. 4.8 |
 
 ![Kleopatra fit](docs/images/kleopatra_fit.png)
 
-*(216) Kleopatra: the Roche duet (χ²ᵥ = 2.9, solid red) reaches the sharp,
-deep minima that both solo ellipsoids (χ²ᵥ ≈ 6.7, dashed) smooth over; the
-recovered pair sits at contact with q ≈ 0.9.*
+*(216) Kleopatra: the Roche duet (χ²ᵥ = 2.8, solid red) reaches the sharp,
+deep minima that both solo ellipsoids (χ²ᵥ ≈ 7, dashed) smooth over; the
+recovered pair sits at contact with q = 0.9. With the aspect fixed from the
+known pole, the density is a genuine estimate rather than a minimum.*
 
 ![Eros fit](docs/images/eros_fit.png)
 
 *(433) Eros: the mirror-image outcome — the binary model over-deepens the
-minima and is rejected (χ²ᵥ 7.6 vs. 4.7), while the elongated single body
+minima and is rejected (χ²ᵥ 8.3 vs. 4.8), while the elongated single body
 wins decisively despite its range exceeding the strengthless 0.9-mag limit
 (Eros is a strength-dominated monolith, and the summary says so).*
 
@@ -269,8 +288,8 @@ an internal timing inconsistency in the archival composite (no period error
 or synodic effect can produce it within a single night); only the first
 full rotation is kept, as documented in the data-file header. Second, a
 **cautionary result**: a neighboring night from the same apparition, with a
-slightly larger amplitude (1.12 mag), flips the verdict to BINARY
-(ΔBIC ≈ +48). Eros is not a convex ellipsoid — the large Himeros concavity
+slightly larger amplitude (1.12 mag), flips the verdict toward BINARY.
+Eros is not a convex ellipsoid — the large Himeros concavity
 deepens its minima at extreme equatorial aspects into binary-mimicking
 shapes. This is the fundamental degeneracy of light-curve-only
 discrimination: a decisive "binary" verdict from a *single* night should

@@ -69,7 +69,8 @@ def plot_lightcurve_fit(result, ax, ax_resid=None):
         m = _model_on(fit, dense)
         ax.plot(dense, m, "-" if name == "binary" else "--", lw=1.6,
                 color=st["color"],
-                label=f"{st['label']}  (chi2_nu = {fit.redchi2:.2f})")
+                label=st["label"]
+                + r"  ($\chi^2_\nu$ = " + f"{fit.redchi2:.2f})")
         if ax_resid is not None:
             r = lc.dmag - _model_on(fit, lc.phase)
             ax_resid.plot(lc.phase, r, ".", ms=3, color=st["color"], alpha=0.8)
@@ -135,7 +136,7 @@ def plot_chi2_landscapes(result, ax_solo, ax_duet):
     ax_solo.set_yscale("log")
     ax_solo.set_xlabel("b/a")
     ax_solo.set_ylabel(r"$\chi^2/\chi^2_{\rm best}$")
-    ax_solo.set_title("solo: shape sequence", fontsize=9)
+    ax_solo.set_title("solo: shape sequence (min over aspect)", fontsize=9)
 
     fit = result.fits.get("binary")
     if fit is not None and fit.grid:
@@ -161,21 +162,35 @@ def plot_chi2_landscapes(result, ax_solo, ax_duet):
 
 
 def plot_verdict_panel(result, ax):
-    """Text panel with the verdict and headline numbers."""
+    """Text panel with the verdict and headline numbers (mathtext Greek)."""
     ax.axis("off")
     v = result.verdict
     lines = [f"VERDICT: {v.preferred.upper()}",
-             f"evidence: {v.strength}   dBIC = {v.delta_bic:+.1f}", ""]
+             f"evidence: {v.strength}   "
+             + r"$\Delta$BIC = " + f"{v.delta_bic:+.1f}"]
+    if v.chi2_scale > 1.0:
+        lines.append(r"(errors rescaled by $\chi^2_\nu$ = "
+                     + f"{v.chi2_scale:.2f})")
+    lines.append("")
     for nm in ("jacobi", "free", "binary"):
         fit = result.fits.get(nm)
         if fit is None:
             continue
-        rho = (f"rho = {fit.density_kgm3:.0f} kg/m3"
-               if fit.density_kgm3 is not None else "no density (free mode)")
-        lines.append(f"{nm}: chi2_nu = {fit.redchi2:.2f}, {rho}")
+        if fit.density_kgm3 is not None:
+            geq = r"$\geq$ " if fit.density_is_minimum else ""
+            rho = (r"$\rho$ " + geq
+                   + f"{fit.density_kgm3:.0f} " + r"kg/m$^3$")
+        else:
+            rho = "no density (free mode)"
+        lines.append(f"{nm}: " + r"$\chi^2_\nu$ = "
+                     + f"{fit.redchi2:.2f}, " + rho)
         if nm == "binary":
             lines.append(f"   q = {fit.params['q']:.2f}, "
-                         f"d/(a1+a2) = {fit.params['separation']:.2f}")
+                         + r"$d/(a_1{+}a_2)$ = "
+                         + f"{fit.params['separation']:.2f}")
+    if any(f.density_is_minimum and f.density_kgm3 is not None
+           for f in result.fits.values()):
+        lines.append(r"densities are minima (aspect unconstrained)")
     lines.append("")
     lines.append(f"amplitude {v.morphology.amplitude:.2f} mag"
                  + ("  (> 0.9 single-figure limit)"

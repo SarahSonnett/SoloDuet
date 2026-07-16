@@ -121,6 +121,7 @@ def _result_json(result) -> dict:
             "delta_bic": result.verdict.delta_bic,
             "delta_aic": result.verdict.delta_aic,
             "f_test_p": result.verdict.f_test_p,
+            "chi2_scale": result.verdict.chi2_scale,
             "caveats": result.verdict.caveats,
         },
         "morphology": {
@@ -144,6 +145,7 @@ def _result_json(result) -> dict:
             "bic": fit.bic,
             "aic": fit.aic,
             "density_kgm3": fit.density_kgm3,
+            "density_is_minimum": bool(fit.density_is_minimum),
             "within_1sigma": {k: list(v) for k, v in fit.within_1sig.items()},
             "notes": fit.notes,
         }
