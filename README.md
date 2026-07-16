@@ -89,10 +89,9 @@ For every model class × scattering law, a grid over the shape sequence and
 aspect angle is scanned (rotational phase offset and magnitude zero-point
 are optimized analytically at no rendering cost), then the best node is
 refined with a simplex. Parameter ranges quote the χ²/χ²(best) < 2 region
-(≈ 1σ; [1]). The solo-vs-duet decision uses **ΔBIC** on the Kass & Raftery
-(1995) evidence ladder [9], with ΔAIC and a (heuristic, non-nested) F-test
-reported for context, corroborated by model-independent morphology
-diagnostics:
+(≈ 1σ; [1]). The solo-vs-duet decision uses **ΔBIC**, with ΔAIC and a
+(heuristic, non-nested) F-test reported for context, corroborated by
+model-independent morphology diagnostics:
 
 * peak-to-peak range **> 0.9 mag** cannot be produced by a single
   equilibrium figure and demands a contact binary or albedo variegation
@@ -103,6 +102,22 @@ diagnostics:
   unreliable when the phase angle exceeds a few degrees (binary minima
   broaden with α [1]);
 * unequal minima / odd-harmonic power indicate component asymmetry.
+
+#### How to read the verdict (ΔBIC)
+
+Each model is scored with the Bayesian Information Criterion,
+`BIC = χ² + k ln n` (Schwarz 1978 [10]), i.e. its χ² **plus a penalty for
+free parameters** — the binary model (k = 5) has one more knob than the
+Jacobi solo (k = 4) and must earn it. SoloDuet reports
+
+> `dBIC = BIC(single) − BIC(binary)` — **positive favors the duet,
+> negative the solo.**
+
+The strength labels follow the Kass & Raftery (1995) evidence ladder [9]:
+|ΔBIC| < 2 → statistically **indistinguishable** (verdict "indeterminate"),
+2–6 → *positive* evidence, 6–10 → *strong*, > 10 → *very strong*. Because
+ΔBIC ≈ 2 ln(Bayes factor), ΔBIC = 10 already corresponds to odds of
+~150 : 1 in favor of the winning model.
 
 ## What it decides — and what it can't
 
@@ -203,8 +218,21 @@ pipeline:
 
 | object | ground truth | SoloDuet verdict | recovered vs. truth |
 |---|---|---|---|
-| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC ≈ +100) | near-contact separation d/(a₁+a₂) ≈ 0.98; ρ ≈ 3.8 g/cm³ (11% above the satellite-orbit value) |
-| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC ≈ −400) | free-ellipsoid b/a ≈ 0.40 vs. 0.33 in situ; binary model rejected at χ²ᵥ 8.5 vs. 5.6 |
+| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC = +98) | near-contact separation d/(a₁+a₂) = 0.98; ρ = 3.75 g/cm³ (11% above the satellite-orbit value) |
+| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC = −408) | free-ellipsoid b/a = 0.40 vs. 0.33 in situ; binary model rejected at χ²ᵥ 8.5 vs. 5.6 |
+
+![Kleopatra fit](docs/images/kleopatra_fit.png)
+
+*(216) Kleopatra: the Roche duet (χ²ᵥ = 2.9, solid red) reaches the sharp,
+deep minima that both solo ellipsoids (χ²ᵥ ≈ 6.7, dashed) smooth over; the
+recovered pair sits at contact with q ≈ 0.9.*
+
+![Eros fit](docs/images/eros_fit.png)
+
+*(433) Eros: the mirror-image outcome — the binary model over-deepens the
+minima and is rejected (χ²ᵥ 8.5 vs. 5.6), while the elongated single body
+wins decisively despite its range exceeding the strengthless 0.9-mag limit
+(Eros is a strength-dominated monolith, and the summary says so).*
 
 Both curves have ranges just above the 0.9-mag strengthless single-figure
 limit — Kleopatra because it *is* two lobes, Eros because it is a
