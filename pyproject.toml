@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soloduet"
+version = "0.1.0"
+description = "Decide whether an asteroid rotational light curve is best described by a single Jacobi ellipsoid (solo) or a Roche contact/close binary (duet)"
+readme = "README.md"
+authors = [{ name = "S. Sonnett", email = "ssonnett@psi.edu" }]
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.22",
+    "scipy>=1.8",
+    "matplotlib>=3.5",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+
+[project.optional-dependencies]
+horizons = ["astroquery"]
+test = ["pytest"]
+
+[project.scripts]
+soloduet = "soloduet.cli:main"
+
+[project.urls]
+Repository = "https://github.com/SarahSonnett/SoloDuet"
+
+[tool.setuptools]
+packages = ["soloduet"]
+
+[tool.setuptools.package-data]
+soloduet = ["data/*.npz"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: long-running full-resolution tests (deselect with '-m \"not slow\"')",
+]

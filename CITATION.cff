@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use SoloDuet in your research, please cite it as below."
+title: "SoloDuet: single Jacobi ellipsoid vs. Roche contact-binary light-curve discrimination"
+authors:
+  - family-names: "Sonnett"
+    given-names: "S."
+    email: "ssonnett@psi.edu"
+version: 0.1.0
+date-released: "2026-07-16"
+license: BSD-3-Clause
+repository-code: "https://github.com/SarahSonnett/SoloDuet"
+abstract: >-
+  SoloDuet fits both a single rotating triaxial ellipsoid (constrained to the
+  fluid-equilibrium Jacobi sequence, or optionally unconstrained) and a
+  tidally locked Roche contact/close-binary model to an asteroid rotational
+  light curve, and evaluates which model the data statistically prefer,
+  following the methodology of Lacerda & Jewitt (2007, AJ 133, 1393).
+references:
+  - type: article
+    authors:
+      - family-names: "Lacerda"
+        given-names: "P."
+      - family-names: "Jewitt"
+        given-names: "D. C."
+    title: "Densities of Solar System Objects from Their Rotational Light Curves"
+    journal: "The Astronomical Journal"
+    volume: 133
+    start: 1393
+    year: 2007
+    doi: "10.1086/511772"
