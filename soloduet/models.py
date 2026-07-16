@@ -111,7 +111,17 @@ def _cached_lightcurve(scene_key, aspect_deg, alpha_deg, scattering,
 def solo_curve(axes, aspect_deg: float, alpha_deg: float, scattering: str,
                n_phases: int = DEFAULT_N_PHASES,
                n_pixels: int = DEFAULT_N_PIXELS):
-    """Cached dense light curve of a single ellipsoid."""
+    """Cached dense light curve of a single ellipsoid.
+
+    With ``scattering="geometric"`` the analytic Surdej & Surdej (1978)
+    projected-area curve is used instead of the ray tracer (exact at zero
+    solar phase angle, the usual small-alpha approximation otherwise).
+    """
+    if str(scattering) == "geometric":
+        from .surdej import surdej_dmag
+
+        phases = np.arange(int(n_phases)) / float(n_phases)
+        return phases, surdej_dmag(axes, float(aspect_deg), phases)
     key = ("solo", tuple(_key(x) for x in axes))
     return _cached_lightcurve(key, _key(aspect_deg), _key(alpha_deg),
                               str(scattering), int(n_phases), int(n_pixels))

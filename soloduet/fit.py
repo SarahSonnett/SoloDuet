@@ -451,8 +451,10 @@ def _verdict(lc: FoldedLightcurve, fits: Dict[str, ModelFit]) -> Verdict:
                        "non-principal-axis rotation, or a wrong period")
 
     if morph.exceeds_single_limit and preferred != "binary":
-        caveats.append("morphology contradicts the statistics: range > 0.9 "
-                       "mag cannot come from a single equilibrium figure")
+        caveats.append("range > 0.9 mag exceeds the strengthless "
+                       "single-figure limit: a single body this elongated "
+                       "requires internal strength (cf. (433) Eros); for a "
+                       "strengthless body it would favor a contact binary")
     if not morph.low_alpha_valid:
         caveats.append(f"phase angle {lc.alpha_deg:.1f} deg > "
                        f"{compare.MORPHOLOGY_ALPHA_MAX:.0f} deg: V/U minima "

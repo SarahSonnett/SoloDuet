@@ -1,0 +1,40 @@
+# Relative R/V photometry of (216) Kleopatra
+# Source: DAMIT (Durech, Sidorin & Kaasalainen 2010, A&A 513, A46),
+#   https://damit.cuni.cz asteroid id 1044, light curve index 28 of the exportAllForAsteroid plaintext export (retrieved 2026-07-16);
+#   original photometry from the literature as archived by DAMIT.
+# Ground truth: radar+AO dog-bone bilobed body (Ostro et al. 2000; Shepard et al. 2018: 276 x 94 x 78 km); rho = 3.38 g/cm3 from its moons (Marchis et al. 2021).
+# Rotation period: 5.385282 h (DAMIT).  Spin pole: ecliptic (lambda, beta) = (74, 20) deg.
+# Geometry of this block: solar phase angle alpha = 6.0 deg, aspect angle = 83.6 deg (from the DAMIT Sun/Earth vectors).
+# Differential magnitudes about the block mean (relative photometry;
+# a uniform 0.02 mag uncertainty is adopted).
+# JD  dmag  err
+2445020.653987 -0.1675 0.02
+2445020.662779 -0.0875 0.02
+2445020.671320 +0.0555 0.02
+2445020.680904 +0.2465 0.02
+2445020.688612 +0.4815 0.02
+2445020.697279 +0.7865 0.02
+2445020.716612 +0.2195 0.02
+2445020.725236 -0.0115 0.02
+2445020.731236 -0.1215 0.02
+2445020.733986 -0.1575 0.02
+2445020.739611 -0.2045 0.02
+2445020.742319 -0.2285 0.02
+2445020.751861 -0.2335 0.02
+2445020.758944 -0.2395 0.02
+2445020.763528 -0.2155 0.02
+2445020.767153 -0.1775 0.02
+2445020.771194 -0.1355 0.02
+2445020.775028 -0.0775 0.02
+2445020.783736 +0.0435 0.02
+2445020.787778 +0.1185 0.02
+2445020.791486 +0.1775 0.02
+2445020.801527 +0.4735 0.02
+2445020.805318 +0.6235 0.02
+2445020.815443 +0.7805 0.02
+2445020.830568 +0.2165 0.02
+2445020.852360 -0.1695 0.02
+2445020.855902 -0.1905 0.02
+2445020.865984 -0.2245 0.02
+2445020.869109 -0.2315 0.02
+2445020.877901 -0.1905 0.02

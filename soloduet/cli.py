@@ -38,8 +38,11 @@ def parse_args(argv=None):
                         f"{DEFAULT_ASPECT_GRID}); pass one value if the "
                         "pole is known")
     p.add_argument("--scattering", nargs="+", default=["lunar", "icy"],
-                   choices=["lunar", "icy"],
-                   help="scattering law(s) to try (default: both)")
+                   choices=["lunar", "icy", "geometric"],
+                   help="scattering law(s) to try (default: lunar icy). "
+                        "'geometric' = brightness proportional to the "
+                        "illuminated cross-section (Surdej & Surdej 1978 "
+                        "analytic curve for the solo models)")
     p.add_argument("--free-ellipsoid", action="store_true",
                    help="also fit an unconstrained triaxial ellipsoid "
                         "(no density inference)")

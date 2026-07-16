@@ -40,10 +40,24 @@ def lommel_seeliger(mu0, mu, alpha, arg=None):
         return np.where(denom > 0.0, mu0 / denom, 0.0)
 
 
-#: user-facing law names (Lacerda & Jewitt 2007 nomenclature)
+def geometric(mu0, mu, alpha, arg=None):
+    """Uniform radiance: every illuminated, visible point is equally bright.
+
+    The disk-integrated flux is then the illuminated cross-section — at zero
+    phase angle, exactly the projected area, i.e. "geometric" scattering
+    (Surdej & Surdej 1978; the "uniform" model of Lacerda & Jewitt 2007).
+    For a *single* ellipsoid under this law the fit layer bypasses the
+    renderer entirely and uses the analytic curve in
+    :mod:`soloduet.surdej`.
+    """
+    return np.ones_like(np.asarray(mu0, dtype=float))
+
+
+#: user-facing law names ("lunar"/"icy" per Lacerda & Jewitt 2007)
 SCATTERING = {
     "lunar": lommel_seeliger,
     "icy": lambertian,
+    "geometric": geometric,
 }
 
 
@@ -59,4 +73,5 @@ def get_law(name_or_func):
         ) from None
 
 
-__all__ = ["lambertian", "lommel_seeliger", "SCATTERING", "get_law"]
+__all__ = ["lambertian", "lommel_seeliger", "geometric", "SCATTERING",
+           "get_law"]

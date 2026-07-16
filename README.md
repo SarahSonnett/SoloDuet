@@ -73,6 +73,16 @@ The renderer matches (i) the analytic ellipsoid light curve of [1] (their
 eq. 3) to ≲ 0.1 % in flux and (ii) the independent SpotLight renderer to
 ≲ 0.3 mmag when both are importable.
 
+A third law, **"geometric"** (`--scattering geometric`), makes the
+brightness proportional to the illuminated cross-section — the "uniform"
+model of [1]. For the *solo* models this is evaluated with the exact
+analytic projected-area light curve of a triaxial ellipsoid at arbitrary
+aspect angle (**Surdej & Surdej 1978** [13]), whose prolate special case is
+the Sheppard & Jewitt (2004) amplitude–aspect relation (the same model used
+in the Simmer survey simulator); the duet has no closed form and uses the
+uniform-radiance render. The analytic curve is exact at zero phase angle and
+the customary small-α approximation otherwise.
+
 ### Fitting and the verdict
 
 For every model class × scattering law, a grid over the shape sequence and
@@ -182,6 +192,27 @@ machine-readable JSON, and the summary figure to `--outdir`.
 | `example.py` | self-checking solo round trip: synthesize a Jacobi figure, recover shape + density, verdict SINGLE |
 | `example_binary.py` | self-checking duet round trip: synthesize a near-contact q = 0.8 Roche binary, recover q + density, verdict BINARY |
 | `example_2001qg298.py` | the real Sheppard & Jewitt (2004) photometry of 2001 QG298; reproduces the Lacerda & Jewitt (2007) contact-binary verdict and ρ ≈ 590 kg m⁻³ |
+| `example_known_objects.py` | field test on two ground-truth objects with real archived photometry (below) |
+
+### Field test: ground-truth objects
+
+`example_known_objects.py` runs two objects whose natures are known
+independently of light curves — dense archived photometry from DAMIT [14],
+aspect angles fixed from the published spin poles — through the identical
+pipeline:
+
+| object | ground truth | SoloDuet verdict | recovered vs. truth |
+|---|---|---|---|
+| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC ≈ +100) | near-contact separation d/(a₁+a₂) ≈ 0.98; ρ ≈ 3.8 g/cm³ (11% above the satellite-orbit value) |
+| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC ≈ −400) | free-ellipsoid b/a ≈ 0.40 vs. 0.33 in situ; binary model rejected at χ²ᵥ 8.5 vs. 5.6 |
+
+Both curves have ranges just above the 0.9-mag strengthless single-figure
+limit — Kleopatra because it *is* two lobes, Eros because it is a
+strength-dominated monolith — so the pair also exercises the caveat
+machinery: Eros's summary explicitly warns that a single body this
+elongated requires internal strength, and neither object's χ²ᵥ is allowed
+to masquerade as a perfect fit (real surfaces have albedo features and
+non-ellipsoidal topography).
 
 Also try (624) Hektor, the prototype Trojan contact binary [7]: its
 lightcurve range varies 0.1–1.2 mag with viewing geometry, and Lacerda &
@@ -248,6 +279,14 @@ synthesize-and-recover round trips for both verdicts.
     ... Lommel-Seeliger ellipsoids*, A&A, 584, A23 (analytic
     Lommel-Seeliger ellipsoid photometry underpinning the zero-phase
     validation)
+13. Surdej, J., & Surdej, A. 1978, *Asteroid lightcurves simulated by the
+    rotation of a three-axes ellipsoid model*, A&A, 66, 31.
+    [1978A&A....66...31S](https://ui.adsabs.harvard.edu/abs/1978A%26A....66...31S)
+14. Ďurech, J., Sidorin, V., & Kaasalainen, M. 2010, *DAMIT: a database of
+    asteroid models from inversion techniques*, A&A, 513, A46.
+    [2010A&A...513A..46D](https://ui.adsabs.harvard.edu/abs/2010A%26A...513A..46D)
+    (source of the archived (216) Kleopatra and (433) Eros photometry in
+    `data/`)
 
 Descamps, P. 2015 (Icarus, 245, 64) computes true dumb-bell single-surface
 equilibrium figures for contact binaries — a natural future refinement of
