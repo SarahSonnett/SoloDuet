@@ -219,7 +219,7 @@ pipeline:
 | object | ground truth | SoloDuet verdict | recovered vs. truth |
 |---|---|---|---|
 | (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC = +98) | near-contact separation d/(a₁+a₂) = 0.98; ρ = 3.75 g/cm³ (11% above the satellite-orbit value) |
-| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC = −408) | free-ellipsoid b/a = 0.40 vs. 0.33 in situ; binary model rejected at χ²ᵥ 8.5 vs. 5.6 |
+| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC = −359) | free-ellipsoid b/a = 0.39 vs. 0.33 in situ; binary model rejected at χ²ᵥ 7.6 vs. 4.7 |
 
 ![Kleopatra fit](docs/images/kleopatra_fit.png)
 
@@ -230,9 +230,24 @@ recovered pair sits at contact with q ≈ 0.9.*
 ![Eros fit](docs/images/eros_fit.png)
 
 *(433) Eros: the mirror-image outcome — the binary model over-deepens the
-minima and is rejected (χ²ᵥ 8.5 vs. 5.6), while the elongated single body
+minima and is rejected (χ²ᵥ 7.6 vs. 4.7), while the elongated single body
 wins decisively despite its range exceeding the strengthless 0.9-mag limit
 (Eros is a strength-dominated monolith, and the summary says so).*
+
+Two honest footnotes on the Eros data. First, the archived 1975 night spans
+1.12 rotations, and its final 18 points — a repeat of already-covered
+rotational phases — arrive ~8 minutes early relative to the first coverage,
+an internal timing inconsistency in the archival composite (no period error
+or synodic effect can produce it within a single night); only the first
+full rotation is kept, as documented in the data-file header. Second, a
+**cautionary result**: a neighboring night from the same apparition, with a
+slightly larger amplitude (1.12 mag), flips the verdict to BINARY
+(ΔBIC ≈ +48). Eros is not a convex ellipsoid — the large Himeros concavity
+deepens its minima at extreme equatorial aspects into binary-mimicking
+shapes. This is the fundamental degeneracy of light-curve-only
+discrimination: a decisive "binary" verdict from a *single* night should
+always be tempered by multi-apparition coverage, exactly as Lacerda &
+Jewitt (2007) do for (624) Hektor.
 
 Both curves have ranges just above the 0.9-mag strengthless single-figure
 limit — Kleopatra because it *is* two lobes, Eros because it is a
