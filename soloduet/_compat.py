@@ -61,7 +61,7 @@ HAVE_SILHOUETTE = silhouette is not None
 # ---------------------------------------------------------------------------
 
 if HAVE_SPINDOC:
-    from spindoc import fourier  # type: ignore
+    from spindoc import HGfunction, fourier  # type: ignore
 else:  # pragma: no cover - exercised only when SpinDoc is absent
 
     def fourier(phase, *coeff):
@@ -79,6 +79,17 @@ else:  # pragma: no cover - exercised only when SpinDoc is absent
             i += 2
         return ret
 
+    def HGfunction(x, H, G):
+        """Vendored copy of ``spindoc.HGfunction`` — IAU H-G phase function."""
+        aradians = np.radians(x)
+        W = np.exp(-90.56 * np.tan(aradians / 2.0) ** 2.0)
+        sin_a = np.sin(aradians)
+        tan_a2 = np.tan(aradians / 2.0)
+        denom = 0.119 + 1.341 * sin_a - 0.754 * sin_a ** 2.0
+        phi1 = W * (1.0 - 0.986 * sin_a / denom) + (1.0 - W) * np.exp(-3.332 * tan_a2 ** 0.631)
+        phi2 = W * (1.0 - 0.238 * sin_a / denom) + (1.0 - W) * np.exp(-1.862 * tan_a2 ** 1.218)
+        return H - 2.5 * np.log10((1.0 - G) * phi1 + G * phi2)
+
 
 __all__ = [
     "spotlight",
@@ -88,4 +99,5 @@ __all__ = [
     "HAVE_SPINDOC",
     "HAVE_SILHOUETTE",
     "fourier",
+    "HGfunction",
 ]

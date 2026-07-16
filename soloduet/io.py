@@ -144,6 +144,37 @@ def read_lightcurve(
     return time, mag, merr, 0.0
 
 
+def hg_phase_correction(alpha_deg, G: float = 0.15) -> np.ndarray:
+    """Solar-phase dimming [mag] predicted by the IAU H-G model at ``alpha``.
+
+    Returns ``-2.5 log10[(1-G) Phi_1 + G Phi_2]`` (>= 0, zero at opposition;
+    Bowell et al. 1989), computed with SpinDoc's ``HGfunction`` when the
+    sibling repo is importable.  Subtract this from distance-reduced
+    magnitudes to reference every epoch to zero phase angle, so nights at
+    different solar phase angles synchronize when folded together:
+
+        m_sync = m - 5 log10(r * delta) - hg_phase_correction(alpha, G)
+
+    This aligns the *mean levels* of different epochs; the (second-order)
+    change of light-curve shape with phase angle is not corrected, so quote
+    the median alpha of the combined data to the fitter.
+    """
+    from ._compat import HGfunction
+
+    alpha_deg = np.asarray(alpha_deg, dtype=float)
+    return HGfunction(alpha_deg, 0.0, float(G))
+
+
+def reduce_and_correct(phot, G: float = 0.15) -> np.ndarray:
+    """Distance-reduced, phase-corrected magnitudes of a ``Photometry`` table.
+
+    ``m - 5 log10(rhelio * delta) - hg_phase_correction(alpha, G)`` — the
+    standard reduction for combining multi-epoch photometry before folding.
+    """
+    return (phot.mag - 5.0 * np.log10(phot.rhelio * phot.delta)
+            - hg_phase_correction(phot.alpha, G))
+
+
 def phase_fold(
     time_mjd: np.ndarray,
     mag: np.ndarray,
@@ -182,6 +213,8 @@ __all__ = [
     "FoldedLightcurve",
     "read_lightcurve",
     "phase_fold",
+    "hg_phase_correction",
+    "reduce_and_correct",
     "Photometry",
     "read_photometry",
 ]

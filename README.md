@@ -190,6 +190,34 @@ Useful options: `--fast` (quick look), `--aspect 90` (known pole),
 `--scattering lunar` (single law). The CLI writes a text summary, a
 machine-readable JSON, and the summary figure to `--outdir`.
 
+### Batch mode (surveys)
+
+`batch_fit.py` runs the full competition over every asteroid in an analysis
+tree (one object per subdirectory, photometry in the SpinDoc/Silhouette
+calibrated `Target*.txt` format) and writes everything to one compilation
+directory:
+
+```
+# 1. discover files and write an editable config (periods required;
+#    a results table with Name/G/Per columns pre-fills period and G)
+python batch_fit.py --indir .../Analysis --outdir .../SoloDuet_Compilation \
+       --make-config --results-table .../Analysis/MyResults.txt
+
+# 2. review <outdir>/batch_config.csv, then
+python batch_fit.py --indir .../Analysis --outdir .../SoloDuet_Compilation [--fast]
+```
+
+Multi-epoch files of one object are combined after reduction to unit
+distances and **zero solar phase angle with the IAU H-G phase function**
+(SpinDoc's `HGfunction`; Bowell et al. 1989 [15]) so campaigns from
+different epochs fold together; the median phase angle of the combined data
+is passed to the fitter. Per object you get the summary text/JSON/figure;
+survey-wide, `compilation.csv` (appended as each object finishes —
+interrupted runs resume) and `compilation_summary.txt` sorted by ΔBIC,
+duet-like candidates first. Directories ending in `_dont_include` are
+skipped, and `*_cleaned.txt` files are preferred over their uncleaned
+siblings.
+
 ### Conventions
 
 * **Periods are in HOURS** and refer to the full (double-peaked) light-curve
@@ -325,6 +353,10 @@ synthesize-and-recover round trips for both verdicts.
 13. Surdej, J., & Surdej, A. 1978, *Asteroid lightcurves simulated by the
     rotation of a three-axes ellipsoid model*, A&A, 66, 31.
     [1978A&A....66...31S](https://ui.adsabs.harvard.edu/abs/1978A%26A....66...31S)
+15. Bowell, E., et al. 1989, *Application of Photometric Models to
+    Asteroids*, in Asteroids II, 524 (the IAU H-G phase function used for
+    multi-epoch synchronization).
+    [1989aste.conf..524B](https://ui.adsabs.harvard.edu/abs/1989aste.conf..524B)
 14. Ďurech, J., Sidorin, V., & Kaasalainen, M. 2010, *DAMIT: a database of
     asteroid models from inversion techniques*, A&A, 513, A46.
     [2010A&A...513A..46D](https://ui.adsabs.harvard.edu/abs/2010A%26A...513A..46D)
