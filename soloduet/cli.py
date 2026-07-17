@@ -118,6 +118,7 @@ def _result_json(result) -> dict:
         "verdict": {
             "preferred": result.verdict.preferred,
             "strength": result.verdict.strength,
+            "redchi2_ratio": result.verdict.redchi2_ratio,
             "delta_bic": result.verdict.delta_bic,
             "delta_aic": result.verdict.delta_aic,
             "f_test_p": result.verdict.f_test_p,

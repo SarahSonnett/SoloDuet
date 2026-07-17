@@ -91,12 +91,13 @@ class Verdict:
     """
 
     preferred: str                 # "single" | "binary" | "indeterminate"
-    strength: str                  # Kass & Raftery ladder
+    strength: str                  # chi^2_nu-ratio evidence ladder
     delta_bic: float               # scaled BIC(single) - BIC(binary); >0 favors binary
     delta_aic: float
     f_test_p: float
     morphology: compare.MorphologyReport
     chi2_scale: float = 1.0
+    redchi2_ratio: float = 1.0     # loser/winner chi^2_nu — drives `strength`
     caveats: List[str] = field(default_factory=list)
 
 
@@ -143,10 +144,11 @@ class SoloDuetResult:
             lines.append("")
         v = self.verdict
         lines += ["--- verdict ---",
-                  f"  preferred   : {v.preferred.upper()} "
-                  f"({v.strength}, dBIC = {v.delta_bic:+.1f})",
-                  f"  dAIC = {v.delta_aic:+.1f}   F-test p = {v.f_test_p:.3f} "
-                  f"(heuristic)"]
+                  f"  preferred   : {v.preferred.upper()} ({v.strength})",
+                  f"  chi2_nu ratio: {v.redchi2_ratio:.2f} "
+                  "(evidence requires >= 2 for moderate, >= 3 for strong)",
+                  f"  dBIC = {v.delta_bic:+.1f}   dAIC = {v.delta_aic:+.1f}  "
+                  f" F-test p = {v.f_test_p:.3f}   (auxiliary)"]
         if v.chi2_scale > 1.0:
             lines.append(f"  (errors rescaled by chi2_nu = {v.chi2_scale:.2f}"
                          " of the better model before computing dBIC/dAIC,"
@@ -458,18 +460,21 @@ def _verdict(lc: FoldedLightcurve, fits: Dict[str, ModelFit]) -> Verdict:
                        caveats=["both a single and a binary model are needed "
                                 "for a verdict"])
 
-    single = min(singles, key=lambda f: f.bic)
+    single = min(singles, key=lambda f: f.redchi2)
     # error scaling (Lacerda & Jewitt 2007): if even the better model has
     # reduced chi^2 > 1, assume the uncertainties are underestimated by that
-    # factor — otherwise a large, poorly-modelled dataset converts a
-    # meaningless per-point difference into spuriously decisive evidence
+    # factor.  The scaled dBIC/dAIC are *auxiliary* — the verdict itself is
+    # driven by the conservative chi^2_nu-ratio evidence ladder below.
     scale = max(1.0, min(single.redchi2, binary.redchi2))
     delta_bic = ((single.chi2 - binary.chi2) / scale
                  + (single.k - binary.k) * np.log(len(lc)))  # > 0 favors binary
     delta_aic = ((single.chi2 - binary.chi2) / scale
                  + 2.0 * (single.k - binary.k))
     p = compare.f_test_p(single.chi2, single.dof, binary.chi2, binary.dof)
-    strength = compare.bic_strength(delta_bic)
+
+    winner, loser = ((binary, single) if binary.redchi2 < single.redchi2
+                     else (single, binary))
+    strength = compare.chi2_evidence(winner.redchi2, loser.redchi2)
 
     caveats: List[str] = []
     err_floor = float(np.median(lc.err))
@@ -481,12 +486,20 @@ def _verdict(lc: FoldedLightcurve, fits: Dict[str, ModelFit]) -> Verdict:
                        "verdict is possible")
     elif strength == "indistinguishable":
         preferred = "indeterminate"
-        caveats.append("models are statistically indistinguishable from this "
-                       "light curve alone (cf. 2000 GN171 in Lacerda & "
-                       "Jewitt 2007)")
+        if max(single.redchi2, binary.redchi2) < compare.ADEQUATE_REDCHI2:
+            side = "single" if delta_bic < 0 else "binary"
+            caveats.append("both models describe the data adequately and "
+                           "cannot be told apart (chi2_nu ratio "
+                           f"{loser.redchi2 / winner.redchi2:.2f}); only "
+                           f"parsimony (dBIC) leans {side} — cf. 2000 GN171 "
+                           "in Lacerda & Jewitt 2007")
+        else:
+            caveats.append("models are statistically indistinguishable from "
+                           "this light curve alone (chi2_nu ratio "
+                           f"{loser.redchi2 / winner.redchi2:.2f})")
     else:
-        preferred = "binary" if delta_bic > 0 else "single"
-    if min(single.redchi2, binary.redchi2) > 3.0:
+        preferred = "binary" if winner is binary else "single"
+    if min(single.redchi2, binary.redchi2) > compare.ADEQUATE_REDCHI2:
         caveats.append("neither model describes the data well "
                        "(reduced chi^2 > 3): consider albedo variegation, "
                        "non-principal-axis rotation, or a wrong period")
@@ -509,7 +522,9 @@ def _verdict(lc: FoldedLightcurve, fits: Dict[str, ModelFit]) -> Verdict:
     return Verdict(preferred=preferred, strength=strength,
                    delta_bic=float(delta_bic), delta_aic=float(delta_aic),
                    f_test_p=float(p), morphology=morph,
-                   chi2_scale=float(scale), caveats=caveats)
+                   chi2_scale=float(scale),
+                   redchi2_ratio=float(loser.redchi2 / winner.redchi2),
+                   caveats=caveats)
 
 
 __all__ = [

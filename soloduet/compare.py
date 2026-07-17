@@ -129,7 +129,7 @@ def f_test_p(chi2_a: float, dof_a: int, chi2_b: float, dof_b: int) -> float:
 
 
 def bic_strength(delta_bic: float) -> str:
-    """Kass & Raftery (1995) evidence ladder for |Delta BIC|."""
+    """Kass & Raftery (1995) evidence ladder for |Delta BIC| (auxiliary)."""
     d = abs(delta_bic)
     if d < 2.0:
         return "indistinguishable"
@@ -138,6 +138,45 @@ def bic_strength(delta_bic: float) -> str:
     if d < 10.0:
         return "strong"
     return "very strong"
+
+
+#: reduced chi^2 below which a model is considered an adequate description
+ADEQUATE_REDCHI2 = 3.0
+
+#: chi^2_nu ratio thresholds of the conservative evidence ladder
+RATIO_CLAIM = 1.5      # below this: no preference is claimed at all
+RATIO_MODERATE = 2.0
+RATIO_STRONG = 3.0
+RATIO_VERY_STRONG = 5.0
+
+
+def chi2_evidence(redchi2_winner: float, redchi2_loser: float) -> str:
+    """Conservative evidence label from the reduced-chi^2 comparison.
+
+    Evidence language is earned by *fit quality*, not by information-
+    criterion arithmetic: similar chi^2_nu values mean the models cannot be
+    told apart no matter how many data points sharpen the formal
+    statistics.  The ladder:
+
+    * ratio < 1.5 — ``"indistinguishable"`` (no preference claimed, even if
+      the two values happen to straddle the adequacy threshold);
+    * ratio < 2 — ``"weak"`` unless the winner is adequate
+      (chi^2_nu < 3) while the loser is not, which earns ``"moderate"``;
+    * ratio >= 2 — ``"moderate"``;
+    * ratio >= 3 — ``"strong"``;
+    * ratio >= 5 *and* the winner adequate — ``"very strong"``.
+    """
+    ratio = redchi2_loser / max(redchi2_winner, 1e-12)
+    adequacy_split = (redchi2_winner < ADEQUATE_REDCHI2 <= redchi2_loser)
+    if ratio < RATIO_CLAIM:
+        return "indistinguishable"
+    if ratio >= RATIO_VERY_STRONG and redchi2_winner < ADEQUATE_REDCHI2:
+        return "very strong"
+    if ratio >= RATIO_STRONG:
+        return "strong"
+    if ratio >= RATIO_MODERATE or adequacy_split:
+        return "moderate"
+    return "weak"
 
 
 # ---------------------------------------------------------------------------
@@ -242,6 +281,12 @@ __all__ = [
     "bic",
     "f_test_p",
     "bic_strength",
+    "chi2_evidence",
+    "ADEQUATE_REDCHI2",
+    "RATIO_CLAIM",
+    "RATIO_MODERATE",
+    "RATIO_STRONG",
+    "RATIO_VERY_STRONG",
     "MorphologyReport",
     "morphology",
     "SINGLE_FIGURE_LIMIT",

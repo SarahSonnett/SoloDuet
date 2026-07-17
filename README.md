@@ -103,21 +103,30 @@ model-independent morphology diagnostics:
   broaden with α [1]);
 * unequal minima / odd-harmonic power indicate component asymmetry.
 
-#### How to read the verdict (ΔBIC)
+#### How to read the verdict
 
-Each model is scored with the Bayesian Information Criterion,
-`BIC = χ² + k ln n` (Schwarz 1978 [10]), i.e. its χ² **plus a penalty for
-free parameters** — the binary model (k = 5) has one more knob than the
-Jacobi solo (k = 4) and must earn it. SoloDuet reports
+**Evidence language is earned by fit quality, not by information-criterion
+arithmetic.** A binary can mimic a single ellipsoid's light curve almost
+perfectly at modest amplitudes, and with enough data points any formal
+statistic will amplify a meaningless per-point difference. SoloDuet
+therefore drives the verdict with the **reduced-χ² ratio** of the two
+competing best fits, on a deliberately conservative ladder:
 
-> `dBIC = BIC(single) − BIC(binary)` — **positive favors the duet,
-> negative the solo.**
+| χ²ᵥ ratio (worse/better) | label |
+|---|---|
+| < 1.5 | **indistinguishable** — verdict "indeterminate", no preference claimed |
+| 1.5 – 2 | *weak* (upgraded to *moderate* if the winner fits adequately, χ²ᵥ < 3, while the loser does not) |
+| ≥ 2 | *moderate* |
+| ≥ 3 | *strong* |
+| ≥ 5, winner adequate (χ²ᵥ < 3) | *very strong* |
 
-The strength labels follow the Kass & Raftery (1995) evidence ladder [9]:
-|ΔBIC| < 2 → statistically **indistinguishable** (verdict "indeterminate"),
-2–6 → *positive* evidence, 6–10 → *strong*, > 10 → *very strong*. Because
-ΔBIC ≈ 2 ln(Bayes factor), ΔBIC = 10 already corresponds to odds of
-~150 : 1 in favor of the winning model.
+Auxiliary statistics are still reported for context: `dBIC = BIC(single) −
+BIC(binary)` (positive favors the duet; Schwarz 1978 [10]; Kass & Raftery
+1995 [9]), computed after rescaling the errors so the better model has
+χ²ᵥ = 1 when it exceeds it (the Lacerda & Jewitt 2007 convention), plus
+ΔAIC and a heuristic F-test. When *neither* model is adequate (both
+χ²ᵥ > 3), the summary says so explicitly — a shape preference between two
+inadequate models is not evidence.
 
 **Error scaling.** ΔBIC is only meaningful if the photometric uncertainties
 are realistic. When even the better of the two models has χ²ᵥ > 1, both χ²
@@ -264,8 +273,8 @@ pipeline:
 
 | object | ground truth | SoloDuet verdict | recovered vs. truth |
 |---|---|---|---|
-| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (very strong, ΔBIC = +36, error-scaled) | contact separation d/(a₁+a₂) = 1.00; ρ = 3.78 g/cm³ (12% above the satellite-orbit value) |
-| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (very strong, ΔBIC = −92, error-scaled) | free-ellipsoid b/a = 0.39 vs. 0.33 in situ; binary model rejected at χ²ᵥ 8.3 vs. 4.8 |
+| (216) Kleopatra | bilobed "dog-bone" (radar/AO: Ostro et al. 2000; Shepard et al. 2018); ρ = 3.38 g/cm³ from its moons (Marchis et al. 2021) | **BINARY** (moderate; χ²ᵥ ratio 2.5, adequate vs. inadequate) | contact separation d/(a₁+a₂) = 1.00; ρ = 3.78 g/cm³ (12% above the satellite-orbit value) |
+| (433) Eros | single elongated body (NEAR Shoemaker: 34.4 × 11.2 × 11.2 km; Veverka et al. 2000) | **SINGLE** (weak preference; χ²ᵥ ratio 1.7) | free-ellipsoid b/a = 0.39 vs. 0.33 in situ; binary χ²ᵥ 8.3 vs. 4.8 |
 
 ![Kleopatra fit](docs/images/kleopatra_fit.png)
 

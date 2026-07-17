@@ -167,7 +167,8 @@ def plot_verdict_panel(result, ax):
     v = result.verdict
     lines = [f"VERDICT: {v.preferred.upper()}",
              f"evidence: {v.strength}   "
-             + r"$\Delta$BIC = " + f"{v.delta_bic:+.1f}"]
+             + r"($\chi^2_\nu$ ratio = " + f"{v.redchi2_ratio:.2f})",
+             r"$\Delta$BIC = " + f"{v.delta_bic:+.1f} (auxiliary)"]
     if v.chi2_scale > 1.0:
         lines.append(r"(errors rescaled by $\chi^2_\nu$ = "
                      + f"{v.chi2_scale:.2f})")

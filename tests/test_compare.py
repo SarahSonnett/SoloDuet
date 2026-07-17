@@ -54,6 +54,24 @@ def test_information_criteria():
     assert bic_strength(20.0) == "very strong"
 
 
+def test_chi2_evidence_ladder():
+    from soloduet.compare import chi2_evidence
+
+    # real cases from this repo's field tests / survey work
+    assert chi2_evidence(7.25, 7.36) == "indistinguishable"   # (16152)
+    assert chi2_evidence(31.7, 33.3) == "indistinguishable"   # (4230)
+    # a hair's-breadth adequacy straddle must NOT earn moderate: near-equal
+    # chi^2_nu values support no claim regardless of the 3.0 threshold
+    assert chi2_evidence(2.76, 3.45) == "indistinguishable"   # (222861)
+    assert chi2_evidence(4.8, 8.3) == "weak"                  # (433) Eros
+    assert chi2_evidence(2.8, 6.9) == "moderate"              # (216) Kleopatra
+    assert chi2_evidence(0.94, 1.90) == "moderate"            # 2001 QG298
+    # ladder thresholds
+    assert chi2_evidence(2.0, 6.5) == "strong"                # ratio 3.25
+    assert chi2_evidence(1.0, 5.5) == "very strong"           # ratio 5.5, adequate
+    assert chi2_evidence(4.0, 21.0) == "strong"               # ratio > 5 but winner poor
+
+
 def test_morphology_sinusoid_vs_notched():
     ph = np.linspace(0, 1, 300, endpoint=False)
     # pure sinusoid (ellipsoid-like): curvature ratio ~ 1, small odd power

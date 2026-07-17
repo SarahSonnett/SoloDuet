@@ -63,7 +63,8 @@ DEFAULT_G = 0.15
 SMEAR_WARN = 0.05
 
 CSV_FIELDS = [
-    "object", "verdict", "strength", "dbic", "chi2_scale", "n_points",
+    "object", "verdict", "strength", "redchi2_ratio", "dbic", "chi2_scale",
+    "n_points",
     "n_files", "span_days", "period_hr", "period_err_hr", "G", "G_err",
     "phase_smear", "alpha_med_deg", "amplitude_mag", "exceeds_0p9_limit",
     "jacobi_redchi2", "jacobi_b_over_a", "jacobi_rho_min_kgm3",
@@ -254,6 +255,7 @@ def fit_object(entry: dict, outdir: str, fit_kw: dict) -> dict:
         "object": entry["object"],
         "verdict": v.preferred,
         "strength": v.strength,
+        "redchi2_ratio": round(v.redchi2_ratio, 2),
         "dbic": round(v.delta_bic, 1),
         "chi2_scale": round(v.chi2_scale, 2),
         "n_points": len(lc),
@@ -281,20 +283,32 @@ def fit_object(entry: dict, outdir: str, fit_kw: dict) -> dict:
 
 
 def write_summary_table(rows: list, path: str) -> None:
-    order = np.argsort([-r["dbic"] for r in rows])
+    # duet-preferred first (by chi^2_nu ratio, the evidence driver), then
+    # indeterminate, then single-preferred
+    def sort_key(r):
+        rank = {"binary": 0, "indeterminate": 1, "single": 2}.get(
+            r["verdict"], 1)
+        ratio = float(r.get("redchi2_ratio", 1.0) or 1.0)
+        return (rank, -ratio if rank == 0 else ratio)
+
+    order = sorted(range(len(rows)), key=lambda i: sort_key(rows[i]))
     with open(path, "w") as fh:
-        fh.write("SoloDuet batch compilation -- sorted by dBIC "
-                 "(duet-like first; dBIC > 0 favors the binary)\n")
+        fh.write("SoloDuet batch compilation -- duet-like first; evidence "
+                 "labels follow the chi^2_nu-ratio ladder\n"
+                 "(>= 2 moderate, >= 3 strong, >= 5 + adequate fit very "
+                 "strong; dBIC is auxiliary)\n")
         fh.write("=" * 100 + "\n")
         fh.write("(binary rho values are MINIMA: the aspect angle is "
                  "unconstrained)\n")
-        fh.write("%-10s %-14s %-13s %8s %6s %6s %8s %8s %8s %11s %6s\n" % (
-            "object", "verdict", "strength", "dBIC", "n", "amp",
+        fh.write("%-10s %-14s %-13s %6s %8s %6s %6s %8s %8s %8s %11s %6s\n" % (
+            "object", "verdict", "strength", "ratio", "dBIC", "n", "amp",
             "chi2_jac", "chi2_bin", "q", "rho_bin_min", "smear"))
         for i in order:
             r = rows[i]
-            fh.write("%-10s %-14s %-13s %8.1f %6d %6.2f %8s %8s %8s %11s %6s\n"
-                     % (r["object"], r["verdict"], r["strength"], r["dbic"],
+            fh.write("%-10s %-14s %-13s %6s %8.1f %6d %6.2f %8s %8s %8s %11s "
+                     "%6s\n"
+                     % (r["object"], r["verdict"], r["strength"],
+                        r.get("redchi2_ratio", ""), r["dbic"],
                         r["n_points"], r["amplitude_mag"],
                         r["jacobi_redchi2"], r["binary_redchi2"],
                         r["binary_q"], r["binary_rho_min_kgm3"],

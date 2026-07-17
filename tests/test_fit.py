@@ -51,7 +51,10 @@ def test_solo_roundtrip():
     lc = sd.FoldedLightcurve(phase=ph, dmag=dm, err=np.full(80, 0.02),
                              period_hr=7.0, alpha_deg=1.0)
     res = sd.fit_lightcurve(lc, **FAST_KW)
-    assert res.verdict.preferred == "single"
+    # under the conservative chi^2_nu-ratio ladder a smooth ellipsoid curve
+    # may be formally indistinguishable from a wide binary (only parsimony
+    # separates them) — but it must never be called a binary
+    assert res.verdict.preferred in ("single", "indeterminate")
     j = res.fits["jacobi"]
     assert j.params["b_over_a"] == pytest.approx(0.60, abs=0.06)
     assert j.redchi2 < 2.0
