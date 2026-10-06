@@ -70,7 +70,8 @@ def fetch_horizons_geometry(target: str, mjd_epochs, location: str = "500@399"):
     from astroquery.jplhorizons import Horizons  # deferred optional import
 
     mjd_epochs = np.atleast_1d(np.asarray(mjd_epochs, dtype=float))
-    obj = Horizons(id=target, location=location, epochs=mjd_epochs + 2_400_000.5)
+    obj = Horizons(id=target, location=location, epochs=mjd_epochs + 2_400_000.5,
+                   id_type="smallbody")
     eph = obj.ephemerides()
     return {
         "ecl_lon": np.array(eph["ObsEclLon"], dtype=float),
